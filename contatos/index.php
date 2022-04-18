@@ -6,6 +6,15 @@
  */
 require($_SERVER['DOCUMENT_ROOT'] . '/_config.php');
 
+/***********************************************
+ * Seus códigos PHP desta página iniciam aqui! *
+ ***********************************************/
+
+
+/************************************************
+ * Seus códigos PHP desta página terminam aqui! *
+ ************************************************/
+
 /**
  * Variável que define o título desta página.
  * Essa variável é usada no arquivo "_header.php".
@@ -39,12 +48,12 @@ require($_SERVER['DOCUMENT_ROOT'] . '/_header.php');
 
         <p>
             <label for="nome">Nome:</label>
-            <input type="text" name="nome" id="nome" required minlength="3" value="Joca da Silva">
+            <input type="text" name="nome" id="nome" value="Joca da Silva">
         </p>
 
         <p>
             <label for="emil">E-mail:</label>
-            <input type="email" name="email" id="email" required value="joca@silva">
+            <input type="text" name="email" id="email" required value="joca@silva">
         </p>
 
         <p>
