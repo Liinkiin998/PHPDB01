@@ -6,14 +6,88 @@
  */
 require($_SERVER['DOCUMENT_ROOT'] . '/_config.php');
 
-/**
- * Processa envio do formulário.
- */
+/***********************************************
+ * Seus códigos PHP desta página iniciam aqui! *
+ ***********************************************/
 
-echo '<pre>';
-print_r($_POST);
-echo '</pre>';
-exit;
+// Processa o formulário, se ele foi enviado
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+
+    // Cria e inicializa as variáveis usadas no script
+    $nome = $email = $assunto = $mensagem = $feedback = '';
+
+    // Recebe o campo 'nome' do formulário e sanitiza
+    $nome = trim(htmlspecialchars($_POST['nome']));
+
+    // Recebe o campo 'email' dor formulário e sanitiza
+    $email = trim(filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL));
+
+    // Recebe o campo 'assunto' do formulário e sanitiza
+    $assunto = trim(htmlspecialchars($_POST['assunto']));
+
+    // Recebe o campo 'mensagem' do formulário e sanitiza
+    $mensagem = trim(htmlspecialchars($_POST['mensagem']));
+
+    // Verifica se tem algum campo vazio
+    if ($nome === '' or $email === '' or $assunto === '' or $mensagem === '') {
+
+        // Exibe mensagem de erro para o usuário e não faz mais nada
+        $feedback = <<<HTML
+
+<h3>Oooops!</h3>
+<p>Não foi possível enviar o contato.</p>
+<p>Você precisa preencher todos os campos do formulário.</p>
+<p><button onclick="history.go(-1)">&larr; Voltar</button></p>
+
+HTML;
+    } else {
+
+        /**
+         * Se todos os campos estão preenchidos.
+         * Salva dados no banco de dados.
+         */
+
+        // Query de escrita no banco
+        $sql = <<<SQL
+
+INSERT INTO contacts (
+    name,
+    email,
+    subject,
+    message
+) VALUES (
+    '{$nome}',
+    '{$email}',
+    '{$assunto}',
+    '{$mensagem}'
+);
+
+SQL;
+
+        // Escreve no banco de dados
+        $conn->query($sql);
+
+        
+
+        // Abradecer ao usuário
+        $feedback = <<<HTML
+
+
+
+HTML;
+    }
+} else {
+
+    /**
+     * Se o formulário NÃO foi enviado
+     * sai desta página e mostra o formulário para o usuário.
+     */
+    header('Location: index.php');
+}
+
+/************************************************
+ * Seus códigos PHP desta página terminam aqui! *
+ ************************************************/
 
 /**
  * Variável que define o título desta página.
@@ -40,7 +114,8 @@ require($_SERVER['DOCUMENT_ROOT'] . '/_header.php');
 
 <section>
 
-
+    <h2>Faça contato</h2>
+    <?php echo $feedback ?>
 
 </section>
 
