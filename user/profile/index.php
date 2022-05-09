@@ -17,6 +17,9 @@ require($_SERVER['DOCUMENT_ROOT'] . '/_config.php');
  * Seus códigos PHP desta página iniciam aqui! *
  ***********************************************/
 
+// Vairáveis do script.
+$modal_photo = false;
+
 // Se usuário não está logado, redireciona para a página inicial.
 if (!isset($_COOKIE['user'])) header('Location: /');
 
@@ -34,7 +37,7 @@ $html = <<<HTML
     <h2>{$nome}</h2>
     <div class="user-photo">
         <img src="{$user['user_photo']}" alt="{$user['user_name']}">
-        <a href="/user/profile/" title="Alterar foto de perfil."><i class="fa-solid fa-pen-to-square fa-fw"></i></a>
+        <a href="/user/profile/?photo" title="Alterar foto de perfil."><i class="fa-solid fa-pen-to-square fa-fw"></i></a>
     </div>
     &nbsp;
     <ul>
@@ -43,7 +46,7 @@ $html = <<<HTML
         <li>Nasceu em {$user['birth_br']} ({$idade} anos)</li>
         <li>{$user['user_profile']}</li>
     </ul>
-<hr class="divider">
+    <hr class="divider">
     <div class="user-links">
 
         <a href="/user/edit/">
@@ -57,10 +60,60 @@ $html = <<<HTML
         </a>
 
     </div>
+    <hr class="divider">
+    <div class="text-center">
+        <a href="/user/delete/">
+            <i class="fa-solid fa-user-xmark fa-fw"></i>
+            Cancelar cadastro
+        </a>
+    </div>
 
 </div>
 
 HTML;
+
+// Se pediu para trocar a foto...
+if ($_SERVER['QUERY_STRING'] === 'photo') :
+
+    // Se formulário foi enviado...
+    if ($_SERVER["REQUEST_METHOD"] == "POST") :
+
+        // Se enviou uma foto de perfil...
+        if ($_FILES['photo']['size'] > 0) :
+
+            // Recebe a 'foto' do formulário, e faz upload.
+            $array_photo = upload_photo('/user/img/');
+
+            // Se ocorreu algum erro com a foto...
+            if ($array_photo['error']) {
+
+                // Gera mensagem de erro.
+                $error .= '<li>' . $array_photo['error'] . '</li>';
+
+                // Carrega uma foto padrão.
+                $photo = '/user/img/generic_user.png';
+
+                // Se não ocorreu erro no upload...
+            } else {
+
+                // Obtém URL da foto.
+                $photo = $array_photo['url'];
+            }
+
+        // Se não enviou uma foto...
+        else :
+
+            // Carrega uma foto padrão.
+            $photo = '/user/img/generic_user.png';
+        endif;
+
+    else :
+
+        $modal_photo = true;
+
+    endif;
+
+endif;
 
 /************************************************
  * Seus códigos PHP desta página terminam aqui! *
@@ -95,6 +148,69 @@ require($_SERVER['DOCUMENT_ROOT'] . '/_header.php');
     <p>Lorem ipsum dolor, sit amet consectetur adipisicing elit. Officia, aperiam corporis culpa consequatur iusto.</p>
 
 </aside>
+
+<?php
+// Exibe o modal com formulário para upload da foto.
+if ($modal_photo) :
+?>
+
+    <!-- Cria modal -->
+    <div id="myModal" class="modal">
+
+        <!-- Conteúdo do modal -->
+        <div class="modal-content">
+            <span class="close" id="btnClose">&times;</span>
+            <h3>Foto de Perfil</h3>
+
+            <form method="post" action="<?php echo htmlspecialchars($_SERVER["PHP_SELF"]); ?>?photo" name="newphoto" enctype="multipart/form-data">
+
+                <p>
+                    <label for="photo">Selecione a nova foto.</label>
+                    <input type="file" name="photo" id="photo" class="valid" accept="image/jpeg, image/jpg, image/png">
+
+                <div class="form-help">
+                    <ul>
+                        <li>Imagem quadrada no formato PNG ou JPG;</li>
+                        <li>Tamanho mínimo de 64px x 64px x 1MB ;</li>
+                        <li>Tamanho máximo de 515px x 512px x 1MB.</li>
+                    </ul>
+                </div>
+                </p>
+
+                <button type="submit">Enviar</button>
+            </form>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Bloqueia reenvio do form caso a página seja recarregada.
+        if (window.history.replaceState) {
+            window.history.replaceState(null, null, window.location.href);
+        }
+
+        // Abre o modal ao carregá-lo.
+        myModal.style.display = "block";
+
+        // Ao clicar no X, fecha o modal.
+        btnClose.onclick = closeModal;
+
+        // Ao cliar em qualquer lugar do modal, fecha o modal.
+        window.onclick = function(event) {
+            if (event.target == myModal) closeModal();
+        }
+
+        // Fecha o modal e recarrega a página.
+        function closeModal() {
+            myModal.style.display = "none";
+            location.href = window.location.pathname;
+        }
+    </script>
+
+<?php
+endif;
+?>
 
 <?php
 
