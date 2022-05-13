@@ -17,11 +17,12 @@ require($_SERVER['DOCUMENT_ROOT'] . '/_config.php');
  * Seus códigos PHP desta página iniciam aqui! *
  ***********************************************/
 
-// Vairáveis do script.
-$modal_photo = false;
-
 // Se usuário não está logado, redireciona para a página inicial.
 if (!isset($_COOKIE['user'])) header('Location: /');
+
+// Vairáveis do script.
+$modal_photo = false;
+$error = '';
 
 // Primeiro nome do usuário
 $nome = explode(' ', $user['user_name'])[0];
@@ -54,20 +55,29 @@ $html = <<<HTML
             Editar Perfil
         </a>
 
+        <a href="/user/password/">
+            <i class="fa-solid fa-key fa-fw"></i>
+            Trocar senha
+        </a>
+
+    </div>
+
+    <hr class="divider">
+
+    <div class="user-links">
+
         <a href="/user/logout/">
             <i class="fa-solid fa-right-from-bracket fa-fw"></i>
             Logout / Sair
         </a>
 
-    </div>
-    <hr class="divider">
-    <div class="text-center">
         <a href="/user/delete/">
             <i class="fa-solid fa-user-xmark fa-fw"></i>
-            Cancelar cadastro
+            Cancelar
         </a>
-    </div>
 
+    </div>
+ 
 </div>
 
 HTML;
@@ -90,14 +100,55 @@ if ($_SERVER['QUERY_STRING'] === 'photo') :
                 // Gera mensagem de erro.
                 $error .= '<li>' . $array_photo['error'] . '</li>';
 
-                // Carrega uma foto padrão.
-                $photo = '/user/img/generic_user.png';
-
                 // Se não ocorreu erro no upload...
             } else {
 
                 // Obtém URL da foto.
                 $photo = $array_photo['url'];
+
+                // Atualiza banco de dados.
+                $sql = <<<SQL
+
+UPDATE users SET user_photo = '{$photo}'
+WHERE user_id = '{$user['user_id']}'
+    AND user_status = 'on';
+
+SQL;
+                $conn->query($sql);
+
+                // SQL para obter TODOS os dados do usuário e gerar o cookie novamente.
+                $sql = <<<SQL
+
+SELECT *,
+    DATE_FORMAT(user_birth, '%d/%m/%Y') AS birth_br
+FROM `users`
+WHERE user_email = '{$user['user_email']}'
+    AND user_status = 'on';
+                
+SQL;
+
+                // Executa a query.
+                $res = $conn->query($sql);
+
+                // Obtém dados do usuário.
+                $user_data = $res->fetch_assoc();
+
+                // Apaga a senha.
+                unset($user_data['user_password']);
+
+                // Adiciona expiração do cookie.
+                $user_data['expires'] = $user['expires'];
+
+                // Grava o cookie no navegador
+                setcookie(
+                    'user',                 // nome do cookie criado
+                    serialize($user_data),  // valor do cookie
+                    $user['expires'],       // tempo de vida do cookie em segundos
+                    '/'                     // Domínio do cookie "/" de localhost
+                );
+
+                // Recarrega a página.
+                header('Location: ' . $_SERVER['SCRIPT_NAME']);
             }
 
         // Se não enviou uma foto...
@@ -137,6 +188,18 @@ require($_SERVER['DOCUMENT_ROOT'] . '/_header.php');
 ?>
 
 <section>
+
+    <?php if ($error !== '') : ?>
+
+        <div class="error">
+            <h3>Oooops!</h3>
+            <p>Ocorreram erros que impedem a atualização do seu cadastro:</p>
+            <ul>
+                <?php echo $error ?>
+            </ul>
+        </div>
+
+    <?php endif; ?>
 
     <?php echo $html ?>
 
